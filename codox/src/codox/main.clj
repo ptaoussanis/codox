@@ -121,7 +121,8 @@
 
 (def defaults
   (let [root-path (System/getProperty "user.dir")]
-    {:language     :clojure
+    {:language     :clojure ; #{:clojure :clojurescript}
+     ;; :base-language :clojure
      :root-path    root-path
      :output-path  "target/doc"
      :source-paths ["src"]
