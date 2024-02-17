@@ -56,9 +56,24 @@
 (def ^:private url-regex
   #"((https?|ftp|file)://[-A-Za-z0-9+()&@#/%?=~_|!:,.;]+[-A-Za-z0-9+()&@#/%=~_|])")
 
-(defn- add-anchors [text]
+(defn- extract-anchors! [state_ text]
   (if text
-    (str/replace text url-regex "<a href=\"$1\">$1</a>")))
+    (str/replace text url-regex
+      (fn [[url]]
+        (let [new-state (swap! state_ (fn [m] (assoc m (str (count m)) url)))]
+          (str "__CODOX_ANCHOR__" (dec (count new-state)) "__"))))))
+
+(comment (let [s_ (atom nil)] [(extract-anchors! s_ "foo http://x.com <https://y.com/path> bar") @s_]))
+
+(defn- replace-anchors [state_ text]
+  (if text
+    (let [state @state_]
+      (str/replace text #"__CODOX_ANCHOR__(\d+)__"
+        (fn [[_ idx]]
+          (let [url (get state idx)]
+            (str "<a href=\"" url "\">" url "</a>")))))))
+
+(comment (let [s_ (atom nil)] (replace-anchors s_ (h (extract-anchors! s_ "foo http://x.com <https://y.com/path> bar")))))
 
 (defmulti format-docstring
   "Format the docstring of a var or namespace into HTML."
@@ -66,8 +81,8 @@
   :default :plaintext)
 
 (defmethod format-docstring :plaintext [_ _ metadata]
-  [:pre.plaintext (add-anchors (h (:doc metadata)))])
-
+  (let [s_ (atom nil)]
+    [:pre.plaintext (replace-anchors s_ (h (extract-anchors! s_ (:doc metadata))))]))
 
 (defn- find-wiki-link [project ns text]
   (let [ns-strs (map (comp str :name) (:namespaces project))]
