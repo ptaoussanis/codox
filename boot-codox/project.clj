@@ -1,4 +1,4 @@
-(defproject com.taoensso.forks/boot-codox "0.10.10"
+(defproject com.taoensso.forks/boot-codox "0.10.11"
   :description "Codox Boot task"
   :url "https://github.com/weavejester/codox"
   :scm {:dir ".."}
